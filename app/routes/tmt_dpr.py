@@ -80,23 +80,47 @@ def create_dpr(
 
 
 # Get DPR
-@router.get("", response_model=list[TMTDPRResponse])
+@router.get("")
 def get_dpr(
     db: Session = Depends(get_db),
     user=Depends(get_current_user)
 ):
 
-    # director sees all
-    if user["role"] == "director":
-        return db.query(TMTDPR).all()
-
-    # PM sees only his sites
-    return (
-        db.query(TMTDPR)
+    query = (
+        db.query(TMTDPR, Site.site_code, Site.site_name)
         .join(Site, Site.id == TMTDPR.site_id)
-        .filter(Site.pm_id == user["user_id"])
-        .all()
     )
+
+    # director sees all
+    if user["role"].lower() == "director":
+        data = query.all()
+    else:
+        data = query.filter(
+            Site.pm_id == user["user_id"]
+        ).all()
+
+    result = []
+
+    for i, (dpr, code, name) in enumerate(data, start=1):
+
+        result.append({
+            "serial": i,
+            "site_code": code,
+            "site_name": name,
+            "id": dpr.id,
+            "sl_no": dpr.sl_no,
+            "po_qty": dpr.po_qty,
+            "supplied": dpr.supplied,
+            "balance": dpr.balance,
+            "pm_remarks": dpr.pm_remarks,
+            "pm_comment": dpr.pm_comment,
+            "director_remarks": dpr.director_remarks,
+            "rate": dpr.rate,
+            "po_value": dpr.po_value,
+            "supply_percent": dpr.supply_percent
+        })
+
+    return result
 
 # Director Remarks
 

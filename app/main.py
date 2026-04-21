@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import Base, engine
 
 # Import models here
@@ -9,6 +10,17 @@ from app.routes import auth, sites, tmt_dpr
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="JNL DPR System")
+
+# CORS (Very Important)
+
+# CORS (VERY IMPORTANT)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth.router)
 app.include_router(sites.router)
